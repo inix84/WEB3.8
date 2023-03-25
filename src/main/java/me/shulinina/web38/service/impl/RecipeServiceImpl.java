@@ -2,109 +2,90 @@ package me.shulinina.web38.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import me.shulinina.web38.model.Recipe;
 import me.shulinina.web38.service.RecipeFilesService;
 import me.shulinina.web38.service.RecipeService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
+import java.io.*;
 import java.util.TreeMap;
 @Service
 public class RecipeServiceImpl implements RecipeService {
     final private RecipeFilesService recipeFilesService;
-    private static Map<Long, Recipe> recipes = new TreeMap<>();
-    private  static  long lastId = 0;
+    private static TreeMap<Integer, Recipe> recipesMap = new TreeMap<Integer, Recipe>();
+
+    int counter = 0;
     public RecipeServiceImpl(RecipeFilesService recipeFilesService) {
         this.recipeFilesService = recipeFilesService;
     }
     @PostConstruct
     private void init() {
-        try {
-            readFrommFile();
-        } catch (Exception e) {
-            e.printStackTrace();
+        readFromFile();
+    }
+    @Override
+    public Recipe getRecipeByNum(int recipeNum) {
+        if (recipesMap.containsKey(recipeNum)) {
+            return recipesMap.get(recipeNum);
+        } else {
+            return null;
         }
     }
     @Override
-    public long addRecipe(Recipe recipe) {
-        recipes.put(lastId, recipe);
+    public void addRecipesFromInputStream(MultipartFile file) throws IOException {
+        String content = new String(file.getBytes());
+        objectMapper.convertValue(content, new TypeReference<TreeMap<Integer, Recipe>>() {
+        });
         saveToFile();
-        return lastId++;
     }
     @Override
-    public Recipe getRecipe(long id) {
-        for (Recipe r : recipes.values()) {
-            Recipe recipe = recipes.get(id);
-            if (recipe != null) {
-                return recipe;
-            }
+    public Recipe createRecipe(Recipe recipe) {
+        if (recipesMap.containsKey(recipe.getRecipeNum())) {
+            return null;
+        } else {
+            recipesMap.put(recipe.getRecipeNum(), recipe);
+            saveToFile();
+            counter++;
+            return recipe;
         }
-        return null;
     }
     @Override
-    public Recipe editRecipe(long id, Recipe recipe) {
-        for (Recipe r : recipes.values()) {
-            if (recipes.containsKey(id)) {
-                recipes.put(id, recipe);
-                saveToFile();
-                return recipe;
-            }
-        }
-        return null;
-    }
-    @Override
-    public boolean deleteRecipe(long id) {
-        for (Recipe r : recipes.values()) {
-            if (recipes.containsKey(id)) {
-                recipes.remove(id);
-                return true;
-            }
+    public boolean deleteRecipe(int recipeNum) {
+        if (recipesMap.containsKey(recipeNum)) {
+            recipesMap.remove(recipeNum);
+            saveToFile();
+            return true;
         }
         return false;
     }
     @Override
-    public void deleteAllRecipe() {
-        recipes = new TreeMap<>();
+    public Recipe editRecipe(int recipeNum, Recipe recipeName) {
+        if (recipesMap.containsKey(recipeNum)) {
+            recipesMap.put(recipeNum, recipeName);
+            saveToFile();
+            return recipeName;
+        }
+        return null;
     }
     @Override
-    public Recipe getAllRecipe() {
-        return (Recipe) recipes;
+    public TreeMap<Integer, Recipe> getAll() {
+        return recipesMap;
     }
-    //скачивание рецептов
-    @Override
-    public void addRecipesFromInputStream(InputStream inputStream) throws IOException {
-    }
-    //запись в файл
     private void saveToFile() {
         try {
-            DataFile dataFile = new DataFile();
-            String json = new ObjectMapper().writeValueAsString(dataFile);//сохранение рецепта в файл
-            recipeFilesService.saveRecipesToFile(json);
+            String json = new ObjectMapper().writeValueAsString(recipesMap);
+            recipeFilesService.saveToFile(json);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Не удалось сохранить рецепт в файл");
+            throw new RuntimeException(e);
         }
     }
-    //чтение из файла
-    private void readFrommFile() {
+    private void readFromFile() {
+        String json = recipeFilesService.readFromFile();
         try {
-            String json = recipeFilesService.readRecipesFromFile();
-
-            DataFile dataFile= new ObjectMapper().readValue(json, new TypeReference<DataFile>() {
+            recipesMap = new ObjectMapper().readValue(json, new TypeReference<TreeMap<Integer, Recipe>>() {
             });
-            lastId = dataFile.getLastId();
-            recipes = dataFile.getRecipes();
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Не удалось получить рецепт из файла");
+            throw new RuntimeException(e);
         }
-    }
-    @Data
-    @NoArgsConstructor
-    private static class DataFile{
-        private long lastId;
-        private TreeMap<Long, Recipe>recipes;
     }
 }

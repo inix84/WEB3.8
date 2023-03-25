@@ -1,12 +1,12 @@
 package me.shulinina.web38.service;
-import me.shulinina.web38.model.Ingredient;
-public interface IngredientService {
-    long addIngredient(Ingredient ingredient);
-    default Ingredient getIngredient(long id) {
-        return null;
-    }
-    Ingredient getAllIngredient();
-    Ingredient editIngredient(long id, Ingredient ingredient);
-    boolean deleteIngredient(long id);
-    void deleteAllIngredient();
+import me.shulinina.web38.model.Ingredients;
+import java.util.HashMap;
+import java.util.Map;
+public abstract interface IngredientService {
+    String addIngredient(String ingredient, String measureUnit);
+    Ingredients getIngredient(Ingredients ingredient);
+    Map<String, String> ingredientsMap = new HashMap<>();
+    boolean deleteIngredient(Ingredients ingredient);
+    String editIngredient(String ingredient, String measureUnit);
+    Map<String, String> getAll();
 }

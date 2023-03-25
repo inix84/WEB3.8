@@ -8,50 +8,36 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 @Service
 public class RecipeFilesServiceImpl implements RecipeFilesService {
-    @Value("${path.to.recipes.file}")
-    private String recipesFilePath;
-    @Value("${name.of.recipes.file}")
-    private String recipesFileName;
-    //записать файл
+    @Value("${path.to.data.file}")
+    private String dataFilePath;
+    @Value("${name.of.data.file}")
+    private String dataFileName;
     @Override
-    public boolean saveRecipesToFile(String json){
+    public boolean saveToFile(String json) {
         try {
-            cleanRecipesFile();
-            Files.writeString(Path.of(recipesFilePath, recipesFileName),json);
+            cleanDataFile();
+            Files.writeString(Path.of(dataFilePath, dataFileName),json);
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
             return false;
         }
     }
-    //прочитать из файла
     @Override
-    public String readRecipesFromFile(){
+    public String readFromFile() {
         try {
-            return Files.readString(Path.of(recipesFilePath, recipesFileName));
+            return Files.readString(Path.of(dataFilePath, dataFileName));
         } catch (IOException e) {
-            throw new RuntimeException("Не удалось прочитать рецепт из файла");
+            throw new RuntimeException(e);
         }
     }
-    //метод возвращает файл
     @Override
-    public File getFile(){
-        return new File(recipesFilePath + "/" + recipesFileName);
+    public File getDataFile(){
+        return new File(dataFilePath+"/"+dataFileName);
     }
-    //создание временных файлов
     @Override
-    public Path createTempFile(String suffix){
+    public boolean cleanDataFile() {
         try {
-            return  Files.createTempFile(Path.of(recipesFilePath), "tempFile", suffix);
-        } catch (IOException e) {
-            throw new RuntimeException("Не удалось создать временный файл");
-        }
-    }
-    //удалить и очистить файл
-    @Override
-    public boolean cleanRecipesFile(){
-        try {
-            Path path = Path.of(recipesFilePath, recipesFileName);
+            Path path = Path.of(dataFilePath, dataFileName);
             Files.deleteIfExists(path);
             Files.createFile(path);
             return true;
