@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 @Service
-public class FileServiceImplIngredient implements IngredientFileService {
+public class IngredientFileServiceImpl implements IngredientFileService {
     @Value("${path.to.ingredient.data.file}")
     private String ingDataFilePath;
     @Value("${name.of.ingredient.data.file}")
