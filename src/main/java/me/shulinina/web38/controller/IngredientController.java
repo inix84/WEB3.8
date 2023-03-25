@@ -1,153 +1,150 @@
 package me.shulinina.web38.controller;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import me.shulinina.web38.model.Ingredient;
+import me.shulinina.web38.model.Ingredients;
 import me.shulinina.web38.service.IngredientService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/ingredients")
-@Tag(name = "Ингредиенты", description = "CRUD-операции  для работы с ингредиентами" )
+@Tag(name = "Ингредиенты", description = "CRUD-операции и др. эндпоинты для работы с ингредиентами")
 public class IngredientController {
     private final IngredientService ingredientService;
     public IngredientController(IngredientService ingredientService) {
         this.ingredientService = ingredientService;
     }
-    //Добавление нового ингредиента
-    @PostMapping
-    @Operation(summary = "Добавление ингредиента")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Ингредиент был добавлен",
-                    content = {
-                            @Content(
-                                    mediaType = "application/json",
-                                    array = @ArraySchema(schema = @Schema(implementation = Ingredient.class))
-                            )
-                    }
-            )
-    })
-    public ResponseEntity<Long> addIngredient(@RequestBody Ingredient ingredient) {
-        long id = ingredientService.addIngredient(ingredient);
-        return ResponseEntity.ok(id);
-    }
-    //Получение ингредиента по id
-    @GetMapping("/{id}")
+    @GetMapping
     @Operation(
-            summary = "Поиск ингредиента по id",
-            description = "Для получения ингредиента введите его id"
+            summary = "Поиск ингредиентов по названию",
+            description = "Можно искать по параметру или без"
     )
-    @ApiResponses(value = {
+    @Parameters( value = {
+            @Parameter(name = "ingredient", example = "Морковь")
+    })
+    @ApiResponses( value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Ингредиент был найден",
+                    description = "Ингредиент найден",
                     content = {
                             @Content(
-                                    mediaType = "application/json",
-                                    array = @ArraySchema(schema = @Schema(implementation = Ingredient.class))
+                                    mediaType = "application/json" ,
+                                    array = @ArraySchema(schema = @Schema(implementation = Ingredients.class))
                             )
                     }
             )
     })
-    public ResponseEntity<String> getIngredientById(@PathVariable long id) {
-        Ingredient ingredient = ingredientService.getIngredient(id);
-        if (ingredient == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ингредиент не найден. Ошибка 404");
-        }
-        return ResponseEntity.status(HttpStatus.FOUND).body(ingredient.toString());
+    public ResponseEntity<Ingredients> getAll(@RequestParam(required = false) Ingredients ingredient){
+        return null;
     }
-    //Получение списка всех ингредиентов
-    @GetMapping(value = "/allIngredients")
-    @Operation( summary = "Получение списка всех ингредиентов")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Ингредиенты  были найдены",
-                    content = {
-                            @Content(
-                                    mediaType = "application/json",
-                                    array = @ArraySchema(schema = @Schema(implementation = Ingredient.class))
-                            )
-                    }
-            )
-    })
-    public ResponseEntity<Ingredient> getAllIngredient() {
-        ingredientService.getAllIngredient();
-        return ResponseEntity.ok().build();
-    }
-    //Редактирование ингредиента по id
-    @PutMapping("/{id}")
+    @GetMapping("/{ingredient}")
     @Operation(
-            summary = "Обновление сведений по ингредиенту",
-            description = "Для редактирования ингредиента введите его id"
+            summary = "Поиск ингредиента",
+            description = "Нужно искать по названию"
     )
-    @ApiResponses(value = {
+    @Parameters( value = {
+            @Parameter(name = "ingredient", example = "Морковь")
+    })
+    @ApiResponses( value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Ингредиент был изменен",
+                    description = "Ингредиент найден",
                     content = {
                             @Content(
-                                    mediaType = "application/json",
-                                    array = @ArraySchema(schema = @Schema(implementation = Ingredient.class))
+                                    mediaType = "application/json" ,
+                                    array = @ArraySchema(schema = @Schema(implementation = Ingredients.class))
                             )
                     }
             )
     })
-    public ResponseEntity<Ingredient> editIngredient(@PathVariable long id, @RequestBody Ingredient ingredient) {
-        Ingredient n = ingredientService.editIngredient(id, ingredient);
-        if (ingredient == null) {
+    public ResponseEntity<Ingredients> getIngredient(@PathVariable Ingredients ingredient){
+        Ingredients neededIngredient = ingredientService.getIngredient(ingredient);
+        if (neededIngredient == null){
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(ingredient);
+        return ResponseEntity.ok( neededIngredient);
     }
-    //Удаление ингредиента по id
-    @DeleteMapping("/{id}")
+    @PostMapping
     @Operation(
-            summary = "Удаление ингредиента по id",
-            description = "Для удаления ингредиента введите его id"
+            summary = "Создание ингредиента"
     )
-    @ApiResponses(value = {
+    @Parameters( value = {
+            @Parameter(name = "ingredientName", example = "Морковь"),
+            @Parameter(name = "measureUnit", example = "2 шт")
+    })
+    @ApiResponses( value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Ингредиент был удален",
+                    description = "Ингредиент создан",
                     content = {
                             @Content(
-                                    mediaType = "application/json",
-                                    array = @ArraySchema(schema = @Schema(implementation = Ingredient.class))
+                                    mediaType = "application/json" ,
+                                    array = @ArraySchema(schema = @Schema(implementation = Ingredients.class))
                             )
                     }
             )
     })
-    public ResponseEntity<Void> deleteIngredient(@PathVariable long id) {
-        if (ingredientService.deleteIngredient(id)) {
+    public ResponseEntity<String> createIngredient(@RequestBody String ingredient, String measureUnit) {
+        String newIngredient = ingredientService.addIngredient(ingredient,measureUnit);
+        return ResponseEntity.ok().body(newIngredient);
+    }
+    @DeleteMapping("/{ingredient}")
+    @Operation(
+            summary = "Удаление ингредиента",
+            description = "Нужно искать по названию"
+    )
+    @Parameters( value = {
+            @Parameter(name = "ingredient", example = "Морковь")
+    })
+    @ApiResponses( value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Ингредиент удален",
+                    content = {
+                            @Content(
+                                    mediaType = "application/json" ,
+                                    array = @ArraySchema(schema = @Schema(implementation = Ingredients.class))
+                            )
+                    }
+            )
+    })
+    public ResponseEntity<Void> deleteIngredient(@PathVariable Ingredients ingredient) {
+        if (ingredientService.deleteIngredient(ingredient)) {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
     }
-    //Удаление всех ингредиента
-    @DeleteMapping
-    @Operation(summary = "Удаление всех ингредиентов")
-    @ApiResponses(value = {
+    @PutMapping("/{ingredient}")
+    @Operation(
+            summary = "Редактирование ингредиента",
+            description = "Нужно искать по насванию ингредиента"
+    )
+    @Parameters( value = {
+            @Parameter(name = "ingredient", example = "Морковь")
+    })
+    @ApiResponses( value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Ингредиенты были удалены",
+                    description = "Ингредиент найден",
                     content = {
                             @Content(
-                                    mediaType = "application/json",
-                                    array = @ArraySchema(schema = @Schema(implementation = Ingredient.class))
+                                    mediaType = "application/json" ,
+                                    array = @ArraySchema(schema = @Schema(implementation = Ingredients.class))
                             )
                     }
             )
     })
-    public ResponseEntity<Void> deleteAllIngredient() {
-        ingredientService.deleteAllIngredient();
-        return ResponseEntity.ok().build();
+    public ResponseEntity<String> editIngredient(@PathVariable String ingredient, @PathVariable String measureUnit, @RequestBody Ingredients ingredients) {
+        String newIngredient = ingredientService.editIngredient(ingredient, measureUnit);
+        if (ingredient == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(newIngredient);
     }
 }

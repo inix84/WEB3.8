@@ -1,76 +1,79 @@
 package me.shulinina.web38.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import me.shulinina.web38.model.Ingredient;
-import me.shulinina.web38.service.IngredientFilesService;
+import me.shulinina.web38.model.Ingredients;
+import me.shulinina.web38.service.IngredientFileService;
 import me.shulinina.web38.service.IngredientService;
 import org.springframework.stereotype.Service;
-import java.util.Map;
+import javax.annotation.PostConstruct;
 import java.util.TreeMap;
 @Service
 public class IngredientServiceImpl implements IngredientService {
-    final private IngredientFilesService ingredientFilesService;
-    private static Map<Long, Ingredient> ingredients = new TreeMap<>();
-    private static long lastId = 0;
-    public IngredientServiceImpl(IngredientFilesService ingredientFilesService) {
-        this.ingredientFilesService = ingredientFilesService;
+    final private IngredientFileService ingredientFileService;
+    private static TreeMap<String, String> ingredientsMap = new TreeMap<String, String>();
+    public IngredientServiceImpl(IngredientFileService ingredientFileService) {
+        this.ingredientFileService = ingredientFileService;
+    }
+    @PostConstruct
+    private void initIng(){
+        readFromFileIng();
     }
     @Override
-    public long addIngredient(Ingredient ingredient) {
-        ingredients.put(lastId, ingredient);
-        saveToFile();
-        return lastId++;
-    }
-    @Override
-    public Ingredient getIngredient(long id) {
-        for (Ingredient n : ingredients.values()) {
-            Ingredient ingredient = ingredients.get(id);
-            if (ingredient != null) {
-                return ingredient;
-            }
+    public String addIngredient(String ingredient, String measureUnit) {
+        if (ingredientsMap.containsKey(ingredient)) {
+            return null;
+        } else {
+            ingredientsMap.put(ingredient, measureUnit);
+            saveToFileIng();
+            return ingredient;
         }
-        return null;
-    }
-    //Метод получения всех ингредиентов
-    public Ingredient getAllIngredient() {
-        return (Ingredient) ingredients;
     }
     @Override
-    public Ingredient editIngredient(long id, Ingredient ingredient) {
-        for (Ingredient n : ingredients.values()) {
-            if (ingredients.containsKey(id)) {
-                ingredients.put(id, ingredient);
-                saveToFile();
-                return ingredient;
-            }
+    public Ingredients getIngredient(Ingredients ingredient) {
+        if (ingredientsMap.containsKey(ingredient)) {
+            return ingredient;
+        } else {
+            return null;
         }
-        return null;
     }
     @Override
-    public boolean deleteIngredient(long id) {
-        for (Ingredient n : ingredients.values()) {
-            if (ingredients.containsKey(id)) {
-                ingredients.remove(id);
-                return true;
-            }
+    public boolean deleteIngredient(Ingredients ingredient) {
+        if (ingredientsMap.containsKey(ingredient)) {
+            ingredientsMap.remove(ingredient);
+            saveToFileIng();
+            return true;
         }
         return false;
     }
     @Override
-    public void deleteAllIngredient() {
-        ingredients = new TreeMap<>();
+    public String editIngredient(String ingredient, String measureUnit) {
+        if (ingredientsMap.containsKey(ingredient)) {
+            ingredientsMap.put(ingredient, measureUnit);
+            saveToFileIng();
+            return ingredient;
+        }
+        return null;
     }
-    //запись в файл
-    private void saveToFile() {
+    @Override
+    public TreeMap<String, String> getAll() {
+        return ingredientsMap;
+    }
+    private void saveToFileIng(){
         try {
-            String json = new ObjectMapper().writeValueAsString(ingredients);
-            ingredientFilesService.saveIngredientsToFile(json);
+            String json = new ObjectMapper().writeValueAsString(ingredientsMap);
+            ingredientFileService.saveToFileIng(json);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Не удалось сохранить ингредиент в файл");
+            throw new RuntimeException(e);
         }
     }
-    //чтение из файла
-    private void readFrommFile() {
-        String json = ingredientFilesService.readIngredientsFromFile();
+    private void readFromFileIng(){
+        String json = ingredientFileService.readFromFileIng();
+        try {
+            ingredientsMap = new ObjectMapper().readValue(json, new TypeReference<TreeMap<String, String>>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
