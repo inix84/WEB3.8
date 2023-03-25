@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/ingredients")
 @Tag(name = "Ингредиенты", description = "CRUD-операции  для работы с ингредиентами" )
+
 public class IngredientController {
     private final IngredientService ingredientService;
     public IngredientController(IngredientService ingredientService) {
